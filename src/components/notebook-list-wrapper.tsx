@@ -1,6 +1,8 @@
-import { Loader, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { DefaultSuspenseAndErrorBoundary } from "#/components/default-suspense-and-error-boundary";
+import { Loader } from "#/components/loader";
+import { NotebookList } from "#/components/notebook-list";
 import { Separator } from "#/components/ui/separator";
 import { WithOrganizationIdAndList } from "#/components/with-organization-id-and-list";
 import { generalCtx, useWithOrganizationId } from "#/contexts/general/ctx";
@@ -11,12 +13,7 @@ import {
 import { useIsCreatingNotebook } from "#/hooks/mutation/use-is-creating-notebook";
 import { handleGoToChat } from "#/lib/handle-go-to-chat";
 import { createNotebookUuid, OPTIMISTIC_NEW_NOTEBOOK_ID } from "#/lib/utils";
-import {
-	NotebookImportance,
-	NotebookStatus,
-	type BotConversationId,
-} from "#/types/notebook";
-import { NotebookList } from "#/components/notebook-list";
+import { type BotConversationId } from "#/types/notebook";
 
 export function NotebookListWrapper() {
 	const isCreatingNotebook = useIsCreatingNotebook();
@@ -30,28 +27,19 @@ export function NotebookListWrapper() {
 		if (isCreatingNotebook) return;
 
 		const newNotebookData: NewCreateProjectRequestBody = {
-			blocks: [],
 			organizationId,
+			blocks: [],
 			metadata: {
-				bot_conversation: {
-					id: OPTIMISTIC_NEW_NOTEBOOK_ID as unknown as BotConversationId,
-				},
-				status: NotebookStatus.NotStarted,
-				priority: NotebookImportance.Low,
-				id: OPTIMISTIC_NEW_NOTEBOOK_ID,
 				uuid: createNotebookUuid(),
 				title: "New chat",
-				favorited: false,
-				assigned_to: [],
-				description: "",
 			},
 		};
 
 		createNotebook.mutate(newNotebookData);
 
 		handleGoToChat(
-			newNotebookData.metadata.id!,
-			newNotebookData.metadata.bot_conversation!.id,
+			OPTIMISTIC_NEW_NOTEBOOK_ID,
+			OPTIMISTIC_NEW_NOTEBOOK_ID as unknown as BotConversationId,
 		);
 	}
 
@@ -65,7 +53,7 @@ export function NotebookListWrapper() {
 			>
 				<div className="flex items-center gap-2">
 					{isCreatingNotebook ? (
-						<Loader className="size-5 stroke-1 border-t-muted-foreground" />
+						<Loader className="size-5" />
 					) : (
 						<Plus className="size-5 stroke-1" />
 					)}
@@ -74,7 +62,7 @@ export function NotebookListWrapper() {
 				</div>
 			</button>
 
-			<div className="flex flex-col h-full max-h-full overflow-hidden aside-closed:hidden mt-1 gap-1">
+			<div className="flex flex-col h-full max-h-full w-full overflow-hidden aside-closed:invisible mt-1 gap-1">
 				<Separator />
 
 				<span className="text-sm font-bold text-primary mx-3 my-2 aside-closed:hidden">
@@ -92,8 +80,6 @@ export function NotebookListWrapper() {
 					</DefaultSuspenseAndErrorBoundary>
 				</WithOrganizationIdAndList>
 			</div>
-
-			<div className="size-1 flex-none"></div>
 		</>
 	);
 }

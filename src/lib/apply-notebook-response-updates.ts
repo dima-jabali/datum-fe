@@ -565,4 +565,6 @@ export function applyNotebookResponseUpdates({
 		response.bot_conversation_id,
 		patchedBotConversationMessageListPage,
 	);
+
+	setNotebook(response.project_id, patchedNotebook);
 }

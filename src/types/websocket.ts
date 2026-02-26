@@ -2,7 +2,8 @@ import type { EmptyObject, Tagged } from "type-fest";
 
 import type { FileId } from "#/types/file";
 import type { ISODateString, StreamUuid, UUID } from "#/types/general";
-import type { BotConversationId } from "./notebook";
+import type { BotConversationId, NotebookId } from "#/types/notebook";
+import type { PatchProjectResponse } from "#/hooks/mutation/use-patch-notebook-blocks";
 
 export enum WebsocketAction {
 	UnsubscribeBotConversation = "UNSUBSCRIBE_BOT_CONVERSATION",
@@ -31,6 +32,14 @@ export type AuthActionData = {
 	api_key?: string;
 	auth_token?: string;
 	token?: string;
+};
+
+export type SubscribeNotebookActionData = {
+	project_id: NotebookId;
+};
+
+export type UnsubscribeNotebookActionData = {
+	project_id: NotebookId;
 };
 
 export type SubscribeConversationActionData = {

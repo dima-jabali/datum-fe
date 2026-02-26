@@ -2,24 +2,38 @@ import { Check, ChevronDownIcon, Loader, UserPlusIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { LOADER } from "#/components/loader";
+import { UserSearchInput } from "#/components/manage-users-modal/user-search-input";
 import {
 	NativePopover,
 	NativePopoverContent,
 	NativePopoverTrigger,
 } from "#/components/native-popover";
-import type { User } from "#/types/user";
-import { useWithCurrentOrg } from "#/hooks/use-current-organization";
-import { isMobile, noop, stopPropagation } from "#/lib/utils";
-import { ORGANIZATION_MEMBER_ROLES, type OrganizationMemberRole, type OrgMemberWithRole } from "#/types/organization";
-import { Button } from "#/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogTitle, DialogTrigger } from "#/components/ui/dialog";
-import { UserSearchInput } from "#/components/manage-users-modal/user-search-input";
+import { Button } from "#/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogOverlay,
+	DialogTitle,
+	DialogTrigger,
+} from "#/components/ui/dialog";
 import { Input } from "#/components/ui/input";
 import { useGetOrganizationUsersPage } from "#/hooks/get/use-get-org-users-page";
-import { useRemoveUserFromOrganizationMutation } from "#/hooks/mutation/use-remove-user-from-org";
 import { useInviteUserToOrganizationMutation } from "#/hooks/mutation/use-invite-user-to-org";
+import { useRemoveUserFromOrganizationMutation } from "#/hooks/mutation/use-remove-user-from-org";
 import { useUpdateOrgMember } from "#/hooks/mutation/use-update-org-member";
+import { useWithCurrentOrg } from "#/hooks/use-current-organization";
+import { isMobile, noop, stopPropagation } from "#/lib/utils";
+import {
+	ORGANIZATION_MEMBER_ROLES,
+	type OrganizationMemberRole,
+	type OrgMemberWithRole,
+} from "#/types/organization";
+import type { User } from "#/types/user";
 
 type Email = string;
 
@@ -324,19 +338,8 @@ export function ManageUsersModal() {
 										className="grid grid-rows-1 [grid-template-columns:3rem_1fr] w-full items-center justify-start gap-2 rounded-sm hover:bg-link/15 active:bg-link/25"
 										type="button"
 									>
-										<div className="relative size-12 overflow-hidden rounded-full dark:bg-gray-500">
-											<svg
-												className="absolute size-14 -left-1 text-primary"
-												xmlns="http://www.w3.org/2000/svg"
-												fill="currentColor"
-												viewBox="0 0 20 20"
-											>
-												<path
-													d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-													fillRule="evenodd"
-													clipRule="evenodd"
-												></path>
-											</svg>
+										<div className="size-12 flex items-center justify-center rounded-full">
+											<UserPlusIcon className="size-6 stroke-1 stroke-primary" />
 										</div>
 
 										<span className="font-semibold text-left">Add member</span>
@@ -418,7 +421,7 @@ export function ManageUsersModal() {
 									>
 										{fetchOrgUsersPageQuery.fetchStatus === "fetching" ? (
 											<>
-												<Loader />
+												{LOADER}
 
 												<span>Loading more users…</span>
 											</>
@@ -450,7 +453,7 @@ export function ManageUsersModal() {
 										<DialogDescription className="">
 											Are you sure you want to remove{" "}
 											<span className="font-bold underline">
-												{(memberToRemove.email)}
+												{memberToRemove.email}
 											</span>{" "}
 											from&nbsp;
 											<span className="inline font-light italic">

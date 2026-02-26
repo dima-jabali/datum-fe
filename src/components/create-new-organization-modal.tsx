@@ -11,7 +11,6 @@ import {
 	NativeDialogTitle,
 } from "#/components/native-dialog";
 import { useCreateNotebook } from "#/hooks/mutation/use-create-notebook";
-import { NotebookImportance, NotebookStatus } from "#/types/notebook";
 import { useCreateOrganization } from "#/hooks/mutation/use-create-org";
 import { useGetUser } from "#/hooks/get/use-get-user";
 import { createNotebookUuid } from "#/lib/utils";
@@ -107,13 +106,8 @@ export function CreateNewOrganizationModal({ setIsOpen }: Props) {
 				// Create a new project so the user already has a chat:
 				const projectMetadata = await createNotebook.mutateAsync({
 					metadata: {
-						status: NotebookStatus.NotStarted,
-						priority: NotebookImportance.Low,
 						uuid: createNotebookUuid(),
 						title: "New Chat",
-						favorited: false,
-						assigned_to: [],
-						description: "",
 					},
 					organizationId: newOrganization.id,
 					blocks: [],
@@ -143,7 +137,7 @@ export function CreateNewOrganizationModal({ setIsOpen }: Props) {
 		} catch (error) {
 			console.error(error);
 
-			toast.error("Project creation error",{
+			toast.error("Project creation error", {
 				description: getErrorMessage(error),
 			});
 		} finally {

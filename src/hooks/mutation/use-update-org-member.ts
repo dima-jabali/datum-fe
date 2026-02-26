@@ -8,7 +8,10 @@ import {
 import type { AxiosResponse } from "axios";
 
 import type { OrganizationMember } from "#/hooks/mutation/use-invite-user-to-org";
-import type { OrganizationId, OrganizationMemberRole } from "#/types/organization";
+import type {
+	OrganizationId,
+	OrganizationMemberRole,
+} from "#/types/organization";
 import type { UserId } from "#/types/user";
 import { queryKeyFactory } from "#/hooks/query-key-factory";
 import { clientAPI_V1 } from "#/api/axios";

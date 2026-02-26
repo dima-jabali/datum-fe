@@ -38,12 +38,15 @@ export function useGetOrganizationUsersPage(enabled: boolean) {
 
 		...queryOptions,
 
-		async queryFn ({ pageParam, client }) {
-
-			return await api.get["organization-users"](organization.id, pageParam, client);
+		async queryFn({ pageParam, client }) {
+			return await api.get["organization-users"](
+				organization.id,
+				pageParam,
+				client,
+			);
 		},
 
-		getNextPageParam (lastPage, _allPages, lastPageParams) {
+		getNextPageParam(lastPage, _allPages, lastPageParams) {
 			const nextOffset = lastPageParams.offset + lastPageParams.limit;
 
 			if (lastPage && nextOffset > lastPage.total_results) return;
@@ -51,7 +54,7 @@ export function useGetOrganizationUsersPage(enabled: boolean) {
 			return { ...lastPageParams, offset: nextOffset as PageOffset };
 		},
 
-		getPreviousPageParam (_firstPage, _allPages, firstPageParams) {
+		getPreviousPageParam(_firstPage, _allPages, firstPageParams) {
 			const prevOffset = firstPageParams.offset - firstPageParams.limit;
 
 			if (prevOffset < 0) return;

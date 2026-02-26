@@ -1,11 +1,13 @@
 import { useMutation } from "@tanstack/react-query";
 
 import type { ISODateString } from "#/types/general";
-import type { OrganizationId, OrganizationMemberRole } from "#/types/organization";
+import type {
+	OrganizationId,
+	OrganizationMemberRole,
+} from "#/types/organization";
 import type { User } from "#/types/user";
 import { queryKeyFactory } from "#/hooks/query-key-factory";
 import { clientAPI_V1 } from "#/api/axios";
-
 
 type SendInviteToEmailRequest = {
 	orgId: OrganizationId;
@@ -37,7 +39,7 @@ export function useInviteUserToOrganizationMutation() {
 	>({
 		mutationKey,
 
-		 async mutationFn(arg: SendInviteToEmailRequest) {
+		async mutationFn(arg: SendInviteToEmailRequest) {
 			const { orgId, ...body } = arg;
 
 			const path = `/organizations/${orgId}/users`;

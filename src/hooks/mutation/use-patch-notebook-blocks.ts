@@ -15,7 +15,7 @@ import {
 } from "#/lib/apply-notebook-response-updates";
 import type { PatchProjectResponseAction } from "#/types/post-block-update";
 
-type PatchProjectResponse = {
+export type PatchProjectResponse = {
 	bot_conversation_id?: BotConversationId | null;
 	updates: Array<PatchProjectResponseAction>;
 	timestamp: ISODateString;

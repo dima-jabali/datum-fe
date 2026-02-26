@@ -11,6 +11,8 @@ import type {
 import type { OrganizationId } from "#/types/organization";
 import type { BotConversationMessageListPageInfiniteResponse } from "#/hooks/get/use-get-bot-conversation-message-list-page";
 import type { FetchNotebookListPageInfiniteData } from "#/hooks/get/use-get-notebook-list-page";
+import type { SettingsReturnType } from "#/hooks/get/use-get-settings";
+import type { Plan } from "#/types/chat";
 
 export function setBotConversation(
 	botConversationId: BotConversationId,
@@ -22,6 +24,20 @@ export function setBotConversation(
 	return queryClient.setQueryData<BotConversation>(
 		queryKeyFactory.get["bot-conversation"](botConversationId).queryKey,
 		newBotConversation,
+	);
+}
+
+export function setSettings(
+	organizationId: OrganizationId,
+	notebookId: NotebookId,
+	newSettings: Updater<
+		SettingsReturnType | undefined,
+		SettingsReturnType | undefined
+	>,
+) {
+	queryClient.setQueryData<SettingsReturnType>(
+		queryKeyFactory.get["settings"](organizationId, notebookId).queryKey,
+		newSettings,
 	);
 }
 
@@ -60,7 +76,7 @@ export function setNotebookListPages(
 		FetchNotebookListPageInfiniteData | undefined
 	>,
 ) {
-	queryClient.setQueryData<FetchNotebookListPageInfiniteData>(
+	return queryClient.setQueryData<FetchNotebookListPageInfiniteData>(
 		queryKeyFactory.get["notebook-list-page"](organizationId).queryKey,
 		newList,
 	);
@@ -82,9 +98,25 @@ export function setBotConversationMessageListPages(
 		BotConversationMessageListPageInfiniteResponse | undefined
 	>,
 ) {
-	queryClient.setQueryData<BotConversationMessageListPageInfiniteResponse>(
+	return queryClient.setQueryData<BotConversationMessageListPageInfiniteResponse>(
 		queryKeyFactory.get["bot-conversation-message-list-page"](botConversationId)
 			.queryKey,
 		newList,
+	);
+}
+
+export function setBotPlan(
+	botConversationId: BotConversationId,
+	organizationId: OrganizationId,
+	notebookId: NotebookId,
+	newPlan: Updater<Plan | undefined, Plan | undefined>,
+) {
+	return queryClient.setQueryData<Plan>(
+		queryKeyFactory.get["bot-plan"](
+			botConversationId,
+			organizationId,
+			notebookId,
+		).queryKey,
+		newPlan,
 	);
 }

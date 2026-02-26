@@ -1,4 +1,4 @@
-import { BrowserClerk } from "@clerk/clerk-react";
+import type { BrowserClerk } from "@clerk/clerk-react";
 
 declare global {
 	interface Window {

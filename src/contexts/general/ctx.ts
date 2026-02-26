@@ -7,9 +7,19 @@ import {
 
 import { createReactSelectors } from "#/contexts/create-zustand-provider";
 import { isValidNumber } from "#/lib/utils";
-import type { BotConversationId, NotebookId } from "#/types/notebook";
+import type {
+	BotConversationId,
+	ChatTools,
+	NotebookId,
+} from "#/types/notebook";
 import type { OrganizationId } from "#/types/organization";
 import type { UserId } from "#/types/user";
+import { useWithCurrentOrg } from "#/hooks/use-current-organization";
+
+export enum ToolSelectionType {
+	SINGLE_SELECT = "SINGLE_SELECT",
+	MULTI_SELECT = "MULTI_SELECT",
+}
 
 export type GeneralCtxData = {
 	botConversationId: BotConversationId | null;
@@ -17,19 +27,64 @@ export type GeneralCtxData = {
 	notebookId: NotebookId | null;
 	userId: UserId | null;
 
+	userChatTools: Record<OrganizationId, Array<ChatTools>>;
+	toolSelectionType: ToolSelectionType;
+
+	chatListRef: HTMLOListElement | null;
 	isSidebarOpen: boolean;
+
+	windowResizerObserver: ResizeObserver;
+	windowHeight: number;
+	windowWidth: number;
+	isMobile: boolean;
+
+	chatBotAgentName: string;
 };
 
 const generalCtxStoreBase = create(
 	persist(
-		subscribeWithSelector<GeneralCtxData>(function (_set, _get) {
+		subscribeWithSelector<GeneralCtxData>(function (set, _get) {
 			return {
 				botConversationId: null,
 				organizationId: null,
 				notebookId: null,
 				userId: null,
 
+				toolSelectionType: ToolSelectionType.MULTI_SELECT,
+				userChatTools: {},
+
 				isSidebarOpen: false,
+				chatListRef: null,
+
+				windowResizerObserver: (() => {
+					if (!globalThis.window) {
+						return null!;
+					}
+
+					// Convert rem to pixels for the ResizeObserver logic
+					const thresholdPx =
+						32 *
+						parseFloat(getComputedStyle(document.documentElement).fontSize);
+
+					const observer = new ResizeObserver((entries) => {
+						for (const entry of entries) {
+							set({
+								isMobile: entry.contentRect.width < thresholdPx,
+								windowHeight: entry.contentRect.height,
+								windowWidth: entry.contentRect.width,
+							});
+						}
+					});
+
+					observer.observe(document.documentElement);
+
+					return observer;
+				})(),
+				isMobile: false,
+				windowHeight: 0,
+				windowWidth: 0,
+
+				chatBotAgentName: "AI",
 			};
 		}),
 		{
@@ -77,4 +132,10 @@ export function useWithGeneralStoreNotebookId() {
 	}
 
 	return notebookId;
+}
+
+export function useUserChatTools() {
+	const org = useWithCurrentOrg();
+
+	return generalCtx.use.userChatTools()[org.id] ?? org.default_chat_tools;
 }

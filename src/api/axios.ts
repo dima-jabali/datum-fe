@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { isRecord } from "#/lib/utils";
 
-const BACKEND_API = import.meta.env.VITE_BACKEND_API;
+const BACKEND_API = import.meta.env.VITE_PUBLIC_BACKEND_URL;
 
 if (!BACKEND_API) {
 	throw new Error("VITE_BACKEND_API is not defined");
@@ -166,6 +166,14 @@ clientAPI_V1.interceptors.request.use(
 	putAuthTokenOnHeaderError,
 );
 clientAPI_V1.interceptors.response.use(
+	errorsAndNotificationsOnResponse,
+	handleNetworkErrors,
+);
+clientBareAPI.interceptors.request.use(
+	putAuthTokenOnHeader,
+	putAuthTokenOnHeaderError,
+);
+clientBareAPI.interceptors.response.use(
 	errorsAndNotificationsOnResponse,
 	handleNetworkErrors,
 );

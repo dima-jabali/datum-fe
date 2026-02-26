@@ -1,43 +1,38 @@
-import { useLayoutEffect, useRef, useState } from "react";
 import { Search } from "lucide-react";
+import { useLayoutEffect, useRef, useState } from "react";
 
+import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
+import { Input } from "#/components/ui/input";
 import { useSearchUserByEmail } from "#/hooks/mutation/use-search-user-by-email";
-import type { BetterbrainUser } from "#/types/notebook";
-import { LOADER } from "../Button";
-import { Input } from "../Input";
-import { getUserNameOrEmail } from "../layout/projects-helper";
-import { Avatar, AvatarFallback, AvatarImage } from "../Avatar";
+import type { User } from "#/types/user";
+import { LOADER } from "#/components/loader";
 
 type SearchUsersProps = {
-	memberToAdd: BetterbrainUser | undefined;
-	setMemberToAdd: React.Dispatch<
-		React.SetStateAction<BetterbrainUser | undefined>
-	>;
+	memberToAdd: User | undefined;
+	setMemberToAdd: React.Dispatch<React.SetStateAction<User | undefined>>;
 	setEmailToInvite: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
 const TIMEOUT_TO_SEARCH_USERS = 400;
 
-export const UserSearchInput: React.FC<SearchUsersProps> = ({
+export function UserSearchInput({
 	memberToAdd,
 	setEmailToInvite,
 	setMemberToAdd,
-}) => {
-	const [searchUserResults, setSearchUserResults] = useState<BetterbrainUser[]>(
-		[],
-	);
+}: SearchUsersProps) {
+	const [searchUserResults, setSearchUserResults] = useState<User[]>([]);
 	const [isSearching, setIsSearching] = useState(false);
 	const [hasSearched, setHasSearched] = useState(false);
 	const [searchString, setSearchString] = useState("");
 
-	const timeoutRef = useRef<NodeJS.Timeout>(undefined);
+	const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
 	const searchForUserByEmail = useSearchUserByEmail().mutateAsync;
 
 	useLayoutEffect(() => {
 		const searchStringTrimmed = searchString.trim().toLocaleLowerCase();
 
-		const fetchSearchResults = async () => {
+		async function fetchSearchResults() {
 			try {
 				setHasSearched(false);
 				setIsSearching(true);
@@ -61,7 +56,7 @@ export const UserSearchInput: React.FC<SearchUsersProps> = ({
 				setIsSearching(false);
 				setHasSearched(true);
 			}
-		};
+		}
 
 		if (searchStringTrimmed) {
 			timeoutRef.current = setTimeout(
@@ -84,17 +79,17 @@ export const UserSearchInput: React.FC<SearchUsersProps> = ({
 
 	return (
 		<div className="flex flex-col gap-4">
-			<label>
-				<p className="text-sm text-primary">
-					Type an email of a user of BetterBrain to add to your organization:
-				</p>
+			<fieldset>
+				<label className="text-sm text-primary">
+					Type an email of a user to add to your organization:
+				</label>
 
-				<section className="relative">
-					<span className="absolute bottom-0 flex h-full w-8 items-center justify-center">
+				<search className="relative h-10 flex items-center">
+					<span className="absolute bottom-0 flex size-10 items-center justify-center">
 						{isSearching ? (
 							LOADER
 						) : (
-							<Search className="size-4 stroke-slate-400" />
+							<Search className="size-4 stroke-primary/50" />
 						)}
 					</span>
 
@@ -103,13 +98,13 @@ export const UserSearchInput: React.FC<SearchUsersProps> = ({
 							setSearchString(e.target.value.toLocaleLowerCase())
 						}
 						placeholder="ex. hello@world.com"
-						className="mt-3 pl-8"
+						className="pl-10 h-10"
 						value={searchString}
 						type="email"
 						required
 					/>
-				</section>
-			</label>
+				</search>
+			</fieldset>
 
 			<ul
 				className="max-h-40 overflow-y-auto data-[has-results=true]:min-h-[4rem]"
@@ -122,8 +117,8 @@ export const UserSearchInput: React.FC<SearchUsersProps> = ({
 					</p>
 				) : (
 					searchUserResults.map((user) => {
-						const nameOrEmail = getUserNameOrEmail(user);
-						const email = user.email.toLocaleLowerCase();
+						const name = `${user.first_name} ${user.last_name}`;
+						const email = user.email.toLowerCase();
 
 						return (
 							<button
@@ -137,16 +132,14 @@ export const UserSearchInput: React.FC<SearchUsersProps> = ({
 									<AvatarImage src={user?.image_url ?? undefined} />
 
 									<AvatarFallback className="rounded-sm bg-primary font-bold text-black">
-										{nameOrEmail.slice(0, 2)}
+										{user.first_name[0]}
+										{user.last_name?.[0] ?? user.first_name[1]}
 									</AvatarFallback>
 								</Avatar>
 
 								<div className="grid [grid-template-rows:1fr_1fr] grid-cols-1 place-items-star pr-2 items-start overflow-hidden">
-									<span
-										className="font-bold text-left h-full"
-										title={nameOrEmail}
-									>
-										{nameOrEmail}
+									<span className="font-bold text-left h-full" title={name}>
+										{name}
 									</span>
 
 									<span
@@ -163,4 +156,4 @@ export const UserSearchInput: React.FC<SearchUsersProps> = ({
 			</ul>
 		</div>
 	);
-};
+}

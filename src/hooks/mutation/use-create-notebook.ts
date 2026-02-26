@@ -2,22 +2,21 @@ import { useMutation } from "@tanstack/react-query";
 
 import { clientAPI_V1 } from "#/api/axios";
 import { generalCtx } from "#/contexts/general/ctx";
+import type {
+	FetchNotebookListPageInfiniteData,
+	FetchNotebookListPageResponse,
+} from "#/hooks/get/use-get-notebook-list-page";
+import { queryKeyFactory } from "#/hooks/query-key-factory";
 import {
 	setBotConversation,
 	setBotConversationMessageListPages,
 	setNotebook,
 	setNotebookListPages,
+	setSettings,
 } from "#/lib/query-client-helpers";
-import {
-	createISODate,
-	isValidNumber,
-	log,
-	OPTIMISTIC_NEW_NOTEBOOK_ID,
-} from "#/lib/utils";
+import { isValidNumber, noop, OPTIMISTIC_NEW_NOTEBOOK_ID } from "#/lib/utils";
 import type { PageLimit, PageOffset } from "#/types/general";
 import {
-	NotebookImportance,
-	NotebookStatus,
 	type BotConversationId,
 	type Notebook,
 	type NotebookBlock,
@@ -25,12 +24,6 @@ import {
 	type NotebookUuid,
 } from "#/types/notebook";
 import type { OrganizationId } from "#/types/organization";
-import type {
-	FetchNotebookListPageInfiniteData,
-	FetchNotebookListPageResponse,
-} from "#/hooks/get/use-get-notebook-list-page";
-import { useGetUser } from "#/hooks/get/use-get-user";
-import { queryKeyFactory } from "#/hooks/query-key-factory";
 
 const mutationKey = queryKeyFactory.post["notebook"].queryKey;
 
@@ -39,11 +32,9 @@ export type InifiteQueryResponseOfFetchNotebookListPageResponse = {
 	pageParams: unknown;
 };
 
-type CreateNotebookRequestBody = Partial<
-	Omit<NotebookMetadata, "description" | "created_by">
-> & {
-	description: string | null;
+type CreateNotebookRequestBody = {
 	uuid: NotebookUuid;
+	title: string;
 };
 
 export type NewCreateProjectRequestBody = {
@@ -55,8 +46,6 @@ export type NewCreateProjectRequestBody = {
 type CreateNotebookResponse = Notebook;
 
 export function useCreateNotebook() {
-	const user = useGetUser();
-
 	return useMutation<
 		CreateNotebookResponse | null,
 		Error,
@@ -64,16 +53,16 @@ export function useCreateNotebook() {
 	>({
 		mutationKey,
 
-		async mutationFn({ organizationId, ...body }) {
+		async mutationFn({ organizationId, ...body }, ctx) {
 			const path = `/organizations/${organizationId}/projects`;
 
 			const res = await clientAPI_V1.post<CreateNotebookResponse>(path, body);
 
-			// ctx.client
-			// 	.prefetchQuery(
-			// 		queryKeyFactory.get["settings"](organizationId, res.data.metadata.id),
-			// 	)
-			// 	.catch(noop);
+			ctx.client
+				.prefetchQuery(
+					queryKeyFactory.get["settings"](organizationId, res.data.metadata.id),
+				)
+				.catch(noop);
 
 			return res.data;
 		},
@@ -86,25 +75,12 @@ export function useCreateNotebook() {
 						id: OPTIMISTIC_NEW_NOTEBOOK_ID as unknown as BotConversationId,
 					},
 					organization: { id: dataOfNotebookToBeCreated.organizationId },
-					status: NotebookStatus.NotStarted,
-					priority: NotebookImportance.Low,
 					id: OPTIMISTIC_NEW_NOTEBOOK_ID,
-					last_modified: createISODate(),
-					created_at: createISODate(),
-					last_modified_by: user,
-					run_frequency: "",
 					variable_info: {},
-					created_by: user,
-					favorited: false,
-					modified_by: [],
-					assigned_to: [],
-					archived: false,
 					permissions: [],
-					run_every: 0,
-					request: "",
 					...(dataOfNotebookToBeCreated.metadata as unknown as Pick<
 						NotebookMetadata,
-						"title" | "description" | "uuid"
+						"title" | "uuid"
 					>),
 				},
 				// @ts-expect-error => Optimistic doesn't have all data but it's fine
@@ -118,15 +94,7 @@ export function useCreateNotebook() {
 			setNotebookListPages(
 				dataOfNotebookToBeCreated.organizationId,
 				(cachedNotebookListPageInfiniteQueryResponse) => {
-					log(
-						"[onMutate] inserting optimist project metadata in notebook list page.",
-					);
-
 					if (!cachedNotebookListPageInfiniteQueryResponse) {
-						log(
-							"[onMutate] No cachedNotebookListPageInfiniteQueryResponse! Not inserting optimist project metadata in projects list at useCreateNotebook! Creating a new cache instead.",
-						);
-
 						const newCache: FetchNotebookListPageInfiniteData = {
 							pageParams: [
 								{
@@ -154,10 +122,6 @@ export function useCreateNotebook() {
 								);
 
 							if (cachedProjects.some(({ uuid }) => uuid === notebookUuid)) {
-								log(
-									"[onMutate] The new project is already in the list. No need to add it again!",
-								);
-
 								return cachedNotebookListPageInfiniteQueryResponse;
 							}
 						}
@@ -218,25 +182,19 @@ export function useCreateNotebook() {
 					id: OPTIMISTIC_NEW_NOTEBOOK_ID,
 				},
 				id: OPTIMISTIC_BOT_CONVERSATION_ID,
-				created_as_conversation: false,
-				created_at: createISODate(),
-				updated_at: createISODate(),
 				is_streaming: false,
 				title: "New chat",
-				bot: { id: null },
-				created_by: user,
-				archived: false,
 			});
 
-			// setSettings(
-			// 	dataOfNotebookToBeCreated.organizationId,
-			// 	OPTIMISTIC_NEW_NOTEBOOK_ID,
-			// 	{
-			// 		organization_settings: [],
-			// 		project_settings: [],
-			// 		user_settings: [],
-			// 	},
-			// );
+			setSettings(
+				dataOfNotebookToBeCreated.organizationId,
+				OPTIMISTIC_NEW_NOTEBOOK_ID,
+				{
+					organization_settings: [],
+					project_settings: [],
+					user_settings: [],
+				},
+			);
 
 			// We have to update these values here so that the new chat is focused:
 			generalCtx.setState({
@@ -246,7 +204,7 @@ export function useCreateNotebook() {
 			});
 		},
 
-		async onSuccess(projectFromResponse, requestVariables, context) {
+		async onSuccess(projectFromResponse, requestVariables, context, ctx) {
 			if (!projectFromResponse) return;
 
 			const notebookId = projectFromResponse.metadata.id;
@@ -254,15 +212,7 @@ export function useCreateNotebook() {
 			setNotebookListPages(
 				requestVariables.organizationId,
 				(cachedProjectsInfiniteQueryResponse) => {
-					log(
-						"[onSuccess] replacing optimist project metadata in projects infinite list",
-					);
-
 					if (!cachedProjectsInfiniteQueryResponse) {
-						log(
-							"[onSuccess] No cachedProjectsPage or response! Not replacing optimist project metadata in projects infinite list!",
-						);
-
 						return cachedProjectsInfiniteQueryResponse;
 					}
 
@@ -285,10 +235,6 @@ export function useCreateNotebook() {
 					}
 
 					if (path.pagesIndex === -1 || path.resultIndex === -1) {
-						log(
-							"[onSuccess] No optimistic project found in projects infinite list. Not replacing it.",
-						);
-
 						return cachedProjectsInfiniteQueryResponse;
 					}
 
@@ -359,15 +305,9 @@ export function useCreateNotebook() {
 					corresponding_project: {
 						id: notebookId,
 					},
-					created_as_conversation: false,
-					created_at: createISODate(),
-					updated_at: createISODate(),
 					id: botConversationId,
 					is_streaming: false,
 					title: "New chat",
-					bot: { id: null },
-					created_by: user,
-					archived: false,
 				});
 
 				setBotConversationMessageListPages(botConversationId, {
@@ -390,12 +330,12 @@ export function useCreateNotebook() {
 				});
 			}
 
-			// await ctx.client.prefetchQuery(
-			// 	queryKeyFactory.get["settings"](
-			// 		requestVariables.organizationId,
-			// 		notebookId,
-			// 	),
-			// );
+			await ctx.client.prefetchQuery(
+				queryKeyFactory.get["settings"](
+					requestVariables.organizationId,
+					notebookId,
+				),
+			);
 
 			generalCtx.setState({
 				organizationId: requestVariables.organizationId,
@@ -406,10 +346,6 @@ export function useCreateNotebook() {
 
 		meta: {
 			errorTitle: "Failed to create new chat!",
-		},
-
-		onError() {
-			// TODO: revert on error.
 		},
 	});
 }

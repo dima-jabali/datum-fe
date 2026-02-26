@@ -1,5 +1,4 @@
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
-import { Loader } from "lucide-react";
 import {
 	memo,
 	Suspense,
@@ -9,9 +8,10 @@ import {
 } from "react";
 import { ErrorBoundary, useErrorBoundary } from "react-error-boundary";
 
+import { LOADER } from "#/components/loader";
+import { Button } from "#/components/ui/button";
 import { generalCtx } from "#/contexts/general/ctx";
 import { cn } from "#/lib/utils";
-import { Button } from "#/components/ui/button";
 
 export function FallbackLoader({
 	fallbackTextClassName,
@@ -37,7 +37,7 @@ export function FallbackLoader({
 			title="Loading…"
 			{...rest}
 		>
-			{withLoader ? <Loader /> : null}
+			{withLoader ? LOADER : null}
 
 			{fallbackText ? (
 				<p contentEditable={false} className={fallbackTextClassName}>

@@ -3,7 +3,6 @@ import type { AxiosResponse } from "axios";
 import { queryKeyFactory } from "../query-key-factory";
 import { clientAPI_V1 } from "#/api/axios";
 
-
 type RemoveMemberFromOrgRequest = {
 	userId: string;
 	orgId: string;
@@ -16,7 +15,7 @@ export type RemoveMemberFromOrgResponse = AxiosResponse<
 
 const mutationKey = queryKeyFactory.delete["user-from-org"].queryKey;
 
-export function useRemoveUserFromOrganizationMutation () {
+export function useRemoveUserFromOrganizationMutation() {
 	return useMutation<
 		RemoveMemberFromOrgResponse,
 		Error,
@@ -38,4 +37,4 @@ export function useRemoveUserFromOrganizationMutation () {
 			cancelQuery: queryKeyFactory.get["all-organizations"],
 		},
 	});
-};
+}

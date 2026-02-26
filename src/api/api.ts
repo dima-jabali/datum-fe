@@ -4,7 +4,7 @@ import { uniqBy } from "es-toolkit";
 import { toast } from "sonner";
 import { getErrorMessage } from "react-error-boundary";
 
-import { isValidNumber, log } from "#/lib/utils";
+import { createISODate, isValidNumber, log } from "#/lib/utils";
 import { clientAPI_V1, clientBareAPI } from "#/api/axios";
 import type { User, UserId } from "#/types/user";
 import type {
@@ -39,10 +39,65 @@ import type {
 	FetchNotebookListPageResponse,
 } from "#/hooks/get/use-get-notebook-list-page";
 import type { GetBotConversationByIdResponse } from "#/hooks/get/use-get-bot-conversation";
+import type {
+	FetchOrganizationUsersRequest,
+	FetchOrganizationUsersResponse,
+} from "#/hooks/get/use-get-org-users-page";
+import type { FetchNotebookResponse } from "#/hooks/get/use-get-notebook";
+import type { SettingsReturnType } from "#/hooks/get/use-get-settings";
+import type { GetPresignedUrlByFileIdResponse } from "#/hooks/get/use-get-pdf-file-by-id";
+import type { GetBotPlanResponse } from "#/hooks/get/use-fetch-bot-plan";
+import type { Plan } from "#/types/chat";
+import { applyNotebookResponseUpdates } from "#/lib/apply-notebook-response-updates";
+import { updateSettingValuesOnGeneralContext } from "#/lib/update-setting-values-on-general-context";
 
 export const api = {
 	get: {
-		async "org-member"(organizationId: OrganizationId, userId: UserId) {
+		"bot-plan": async (
+			botConversationId: BotConversationId,
+			organizationId: OrganizationId,
+			notebookId: NotebookId,
+		) => {
+			if (botConversationId === (Number.EPSILON as BotConversationId)) {
+				return null;
+			}
+
+			const start = performance.now();
+
+			const path = `/bot-conversations/${botConversationId}/active-plan`;
+
+			const res = await clientAPI_V1.get<GetBotPlanResponse>(path);
+
+			const { updates, plan } = res.data;
+
+			const sortedSubSteps = plan?.sub_tasks?.toSorted(
+				(a, b) => a.step_num - b.step_num,
+			);
+
+			const newPlan = plan
+				? ({ ...plan, sub_tasks: sortedSubSteps } satisfies Plan)
+				: null;
+
+			if (updates && updates.length > 0) {
+				applyNotebookResponseUpdates({
+					organizationId,
+					response: {
+						bot_conversation_id: botConversationId,
+						timestamp: createISODate(),
+						project_id: notebookId,
+						updates,
+					},
+				});
+			}
+
+			log(
+				`useFetchActivePlan(botConversationId = ${botConversationId}) took ${performance.now() - start}ms`,
+			);
+
+			return newPlan;
+		},
+
+		"org-member": async (organizationId: OrganizationId, userId: UserId) => {
 			const res = await clientAPI_V1.get<OrganizationMember>(
 				`/organizations/${organizationId}/users/${userId}`,
 			);
@@ -50,11 +105,11 @@ export const api = {
 			return res.data;
 		},
 
-		async "organization-users"(
+		"organization-users": async (
 			organizationId: OrganizationId,
 			queryParams: FetchOrganizationUsersRequest | null,
 			queryClient: QueryClient,
-		) {
+		) => {
 			try {
 				const searchParams = new URLSearchParams(
 					queryParams as unknown as Record<string, string>,
@@ -111,7 +166,7 @@ export const api = {
 			}
 		},
 
-		async "all-organizations"() {
+		"all-organizations": async () => {
 			try {
 				const res =
 					await clientAPI_V1.get<GetOrganizationsResponse>("/organizations");
@@ -128,7 +183,7 @@ export const api = {
 			}
 		},
 
-		async "all-database-connections"(organizationId: OrganizationId) {
+		"all-database-connections": async (organizationId: OrganizationId) => {
 			if (!isValidNumber(organizationId)) {
 				throw new Error(`Invalid organizationId: "${organizationId}"`);
 			}
@@ -197,12 +252,11 @@ export const api = {
 			return store;
 		},
 
-		async "bot-conversation-message-list-page"(
+		"bot-conversation-message-list-page": async (
 			pageParam: GetBotConversationMessagesPageRequest,
-		) {
+		) => {
 			const { botConversationId, ...searchParamsObj } = pageParam;
 
-			// Casting here because JS converts number to string here:
 			const searchParams = new URLSearchParams(
 				searchParamsObj as unknown as Record<string, string>,
 			);
@@ -215,7 +269,7 @@ export const api = {
 			return res.data;
 		},
 
-		async "notebook-by-id"(notebookId: NotebookId) {
+		"notebook-by-id": async (notebookId: NotebookId) => {
 			if (!isValidNumber(notebookId)) {
 				throw new Error(
 					`notebookId is not valid. Expected a number, got ${notebookId}`,
@@ -235,10 +289,10 @@ export const api = {
 			return res.data;
 		},
 
-		async "notebook-list-page"(
+		"notebook-list-page": async (
 			pageParam: FetchNotebookListPageParams,
 			organizationId: OrganizationId,
-		) {
+		) => {
 			const objForUrlSearchParams: typeof pageParam = {
 				...pageParam,
 			};
@@ -263,7 +317,7 @@ export const api = {
 			return res.data;
 		},
 
-		async "bot-conversation"(botConversationId: BotConversationId) {
+		"bot-conversation": async (botConversationId: BotConversationId) => {
 			const res = await clientAPI_V1.get<GetBotConversationByIdResponse>(
 				`/bot-conversations/${botConversationId}`,
 			);
@@ -271,30 +325,27 @@ export const api = {
 			return res.data;
 		},
 
-		async user() {
+		user: async () => {
 			const res = await clientAPI_V1.get<User>("/user");
 
 			const user = res.data;
 
-			// posthog.identify(`${user.id}`, {
-			// 	name: `${res.data.first_name} ${res.data.last_name}`,
-			// 	email: res.data.email,
-			// });
-
 			return user;
 		},
 
-		async settings(
+		settings: async (
 			organizationId: OrganizationId,
 			notebookId: NotebookId | undefined,
-		) {
+		) => {
 			const path = `/organizations/${organizationId}/settings${
 				isValidNumber(notebookId) ? `?project_id=${notebookId}` : ""
 			}`;
 
-			const res = await clientAPI_V1.get<SettingsReturnType>(path);
+			const settings = (await clientAPI_V1.get<SettingsReturnType>(path)).data;
 
-			return res.data;
+			updateSettingValuesOnGeneralContext(settings);
+
+			return settings;
 		},
 
 		"pdf-file-by-id": async (pdfFileId: FileId | PdfId | undefined) => {

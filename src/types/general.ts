@@ -11,3 +11,5 @@ export type AwsKey = Tagged<string, "AwsKey">;
 export type UUID = Tagged<string, "UUID">;
 
 export type Nullable<T> = { [P in keyof T]: T[P] | null };
+
+export type Base64File = `data:${string};base64,${string}`;

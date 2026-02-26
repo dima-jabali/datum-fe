@@ -10,6 +10,8 @@ import type {
 	PdfId,
 } from "#/types/notebook";
 import type { FileId } from "#/types/file";
+import type { GetBotConversationMessagesPageRequest } from "#/hooks/get/use-get-bot-conversation-message-list-page";
+import type { FetchNotebookListPageParams } from "#/hooks/get/use-get-notebook-list-page";
 
 export const queryKeyFactory = createQueryKeyStore({
 	get: {
@@ -25,9 +27,14 @@ export const queryKeyFactory = createQueryKeyStore({
 			queryKey: [organizationId, userId],
 		}),
 
-		"available-tools": (organizationId: OrganizationId) => ({
-			queryFn: () => api.get["available-tools"](organizationId),
-			queryKey: [organizationId],
+		"bot-plan": (
+			botConversationId: BotConversationId,
+			organizationId: OrganizationId,
+			notebookId: NotebookId,
+		) => ({
+			queryFn: () =>
+				api.get["bot-plan"](botConversationId, organizationId, notebookId),
+			queryKey: [botConversationId, organizationId, notebookId],
 		}),
 
 		"organization-users": (organizationId: OrganizationId) => ({
@@ -98,7 +105,9 @@ export const queryKeyFactory = createQueryKeyStore({
 		"upload-and-index-files": null,
 		"invite-user-to-org": null,
 		"upload-file-to-aws": null,
+		"approve-bot-plan": null,
 		"send-chat-files": null,
+		"edit-bot-plan": null,
 		organization: null,
 		notebook: null,
 
@@ -118,17 +127,27 @@ export const queryKeyFactory = createQueryKeyStore({
 				"run-sql": (blockUuid: NotebookBlockUuid) => ({
 					queryKey: [blockUuid],
 				}),
+				"run-table-block": (blockUuid: NotebookBlockUuid) => ({
+					queryKey: [blockUuid],
+				}),
+				"fix-python": (blockUuid: NotebookBlockUuid) => ({
+					queryKey: [blockUuid],
+				}),
 				"fix-sql": (blockUuid: NotebookBlockUuid) => ({
 					queryKey: [blockUuid],
 				}),
 				"upload-pdf": (blockUuid: NotebookBlockUuid) => ({
 					queryKey: [blockUuid],
 				}),
-				"generate-sql-description": null,
+				"run-python": (blockUuid: NotebookBlockUuid) => ({
+					queryKey: [blockUuid],
+				}),
+				"index-pdf": (blockUuid: NotebookBlockUuid) => ({
+					queryKey: [blockUuid],
+				}),
 				"paginate-dataframe": null,
 				"download-csv": null,
 				"download-sql": null,
-				"index-pdf": null,
 			},
 		},
 	},
@@ -147,5 +166,6 @@ export const queryKeyFactory = createQueryKeyStore({
 
 	delete: {
 		"user-from-org": null,
+		"bot-plan": null,
 	},
 });

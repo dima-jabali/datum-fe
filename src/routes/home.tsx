@@ -6,6 +6,7 @@ import { MakeQueryClientProvider } from "#/contexts/query-client-provider";
 import { HandleIfUserHasChanged } from "#/lib/handle-if-user-has-changed";
 import { RerenderTreeProvider } from "#/contexts/use-rerender-tree";
 import { AllContexts } from "#/contexts/all-contexts";
+import { ChatContent } from "#/components/chat-content";
 
 const isProduction = import.meta.env.MODE === "production";
 
