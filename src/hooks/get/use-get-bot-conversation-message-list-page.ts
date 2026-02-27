@@ -5,12 +5,22 @@ import {
 import { useMemo } from "react";
 
 import { useWithBotConversationId } from "#/contexts/general/ctx";
-import { identity } from "#/lib/utils";
-import type { BotConversationMessage } from "#/types/chat";
+import { useGetBotConversation } from "#/hooks/get/use-get-bot-conversation";
+import { queryKeyFactory } from "#/hooks/query-key-factory";
+import { getSourceMainValues } from "#/lib/sources-for-user/get-source-main-values";
+import {
+	normalizeSources,
+	type NormalizedSource,
+} from "#/lib/sources-for-user/normalize-sources";
+import type { SourceMainValuesContainer } from "#/lib/sources-for-user/source-main-values-container";
+import { identity, isDev } from "#/lib/utils";
+import type {
+	BotConversationMessage,
+	SourceForUserType,
+	SourceID,
+} from "#/types/chat";
 import type { PageLimit, PageOffset } from "#/types/general";
 import type { BotConversationId } from "#/types/notebook";
-import { queryKeyFactory } from "#/hooks/query-key-factory";
-import { useGetBotConversation } from "#/hooks/get/use-get-bot-conversation";
 
 export type GetBotConversationMessagesPageRequest = {
 	/** If not present, will be as 'true'. */
@@ -107,6 +117,55 @@ export function useHasAnyMessage() {
 	return useGetBotConversationMessageListPage(
 		selectHasAnyBotConversationMessage,
 	).data;
+}
+
+function selectAllChatSourcesMainValues(
+	data: BotConversationMessageListPageInfiniteResponse,
+) {
+	const allSourcesMap = new Map<
+		SourceID,
+		SourceMainValuesContainer<
+			SourceForUserType,
+			NormalizedSource["values_type"]
+		>
+	>();
+
+	if (data.pages.length === 0 || data.pages[0]?.results.length === 0) {
+		return allSourcesMap;
+	}
+
+	const start = performance.now();
+
+	// Get all sources
+	for (const page of data.pages) {
+		for (const msg of page.results) {
+			if (msg.sources && msg.sources.length > 0) {
+				const normalizedSources = normalizeSources(msg.sources);
+
+				for (const source of normalizedSources) {
+					const mainValues = getSourceMainValues(source);
+
+					allSourcesMap.set(mainValues.id, mainValues);
+				}
+			}
+		}
+	}
+
+	if (isDev) {
+		const took = performance.now() - start;
+
+		console.log({
+			took,
+			allSourcesMap,
+			data,
+		});
+	}
+
+	return allSourcesMap;
+}
+export function useAllChatSourcesMainValues() {
+	return useGetBotConversationMessageListPage(selectAllChatSourcesMainValues)
+		.data;
 }
 
 export type BotConversationMessageListPageInfiniteResponse = InfiniteData<

@@ -19,10 +19,16 @@ import {
 	type BotConversationMessageId,
 	type BotConversationMessageUuid,
 } from "#/types/chat";
-import type { ISODateString, PageLimit, PageOffset } from "#/types/general";
+import type {
+	Base64Image,
+	ISODateString,
+	PageLimit,
+	PageOffset,
+} from "#/types/general";
 import type {
 	BotConversationId,
 	ChatTools,
+	NotebookBlockUuid,
 	NotebookId,
 } from "#/types/notebook";
 import type { PatchProjectResponseAction } from "#/types/post-block-update";
@@ -35,14 +41,21 @@ export type CreateABotConversationMessageResponse = {
 };
 
 export enum MessageType {
+	Image = "IMAGE",
 	Text = "TEXT",
 }
 
-export type Message = {
-	uuid: BotConversationMessageUuid;
-	type: MessageType.Text;
-	text: string;
-};
+export type Message =
+	| {
+			uuid: BotConversationMessageUuid;
+			type: MessageType.Text;
+			text: string;
+	  }
+	| {
+			uuid: BotConversationMessageUuid;
+			type: MessageType.Image;
+			image: Base64Image;
+	  };
 
 export type CreateABotConversationMessageRequest = {
 	tools_to_use: Array<ChatTools> | undefined;
@@ -119,37 +132,74 @@ export function useAddBotConversationMessage() {
 
 			// Create optimistic item:
 			const optimisticBotConversationMessages = messages.map((msg) => {
-				const optimisticConversationMessage: BotConversationMessage = {
-					message_status: BotConversationMessageStatus.InProgress,
-					message_type: BotConversationMessageType.User_Message,
-					id: Math.random() as BotConversationMessageId,
-					sub_conversation_uuids: ["None"],
-					show_as_intermediate_step: false,
-					order_by_timestamp_ms: nowTime,
-					parallel_conversation_id: null,
-					visible_to_model: true,
-					visible_to_user: true,
-					updated_at: nowISO,
-					created_at: nowISO,
-					toggle_text: null,
-					transient: false,
-					thumbs_up: null,
-					archived: false,
-					uuid: msg.uuid,
-					text: msg.text,
-					sources: null,
-					block: null,
-					json: null,
-					bot_conversation: {
-						id: botConversationId,
-					},
-					sender: {
-						sender_type: BotConversationMessageSenderType.User,
-						sender_info: betterbrainUser,
-					},
-				};
+				const isTextMessage = msg.type === MessageType.Text;
 
-				return optimisticConversationMessage;
+				if (isTextMessage) {
+					const optimisticConversationMessage: BotConversationMessage = {
+						message_status: BotConversationMessageStatus.InProgress,
+						message_type: BotConversationMessageType.User_Message,
+						id: Math.random() as BotConversationMessageId,
+						sub_conversation_uuids: ["None"],
+						show_as_intermediate_step: false,
+						order_by_timestamp_ms: nowTime,
+						parallel_conversation_id: null,
+						visible_to_model: true,
+						visible_to_user: true,
+						updated_at: nowISO,
+						created_at: nowISO,
+						toggle_text: null,
+						transient: false,
+						thumbs_up: null,
+						archived: false,
+						uuid: msg.uuid,
+						text: msg.text,
+						sources: null,
+						block: null,
+						json: null,
+						bot_conversation: {
+							id: botConversationId,
+						},
+						sender: {
+							sender_type: BotConversationMessageSenderType.User,
+							sender_info: betterbrainUser,
+						},
+					};
+
+					return optimisticConversationMessage;
+				} else {
+					const optimisticConversationMessage: BotConversationMessage = {
+						message_type:
+							BotConversationMessageType.Notebook_Block_User_Image_Message,
+						block: { uuid: msg.uuid as unknown as NotebookBlockUuid },
+						message_status: BotConversationMessageStatus.InProgress,
+						id: Math.random() as BotConversationMessageId,
+						sub_conversation_uuids: ["None"],
+						show_as_intermediate_step: false,
+						order_by_timestamp_ms: nowTime,
+						parallel_conversation_id: null,
+						visible_to_model: true,
+						visible_to_user: true,
+						updated_at: nowISO,
+						created_at: nowISO,
+						toggle_text: null,
+						transient: false,
+						thumbs_up: null,
+						archived: false,
+						uuid: msg.uuid,
+						sources: null,
+						text: null,
+						json: null,
+						bot_conversation: {
+							id: botConversationId,
+						},
+						sender: {
+							sender_type: BotConversationMessageSenderType.User,
+							sender_info: betterbrainUser,
+						},
+					};
+
+					return optimisticConversationMessage;
+				}
 			});
 
 			// Add optimistic item to cache:

@@ -8,9 +8,9 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import { isDev } from "./lib/utils";
 
 import "#/app.css";
-import { isDev } from "./lib/utils";
 
 // …
 

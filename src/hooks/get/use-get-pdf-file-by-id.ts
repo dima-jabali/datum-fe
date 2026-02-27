@@ -19,10 +19,7 @@ export type GetPresignedUrlByFileIdResponse = {
 	id: PdfId;
 };
 
-export function useFetchPdfFileById(
-	enabled: boolean,
-	pdfFileId?: PdfId | PdfId,
-) {
+export function useGetPdfFileById(enabled: boolean, pdfFileId?: PdfId | PdfId) {
 	const canFetch = enabled && isValidNumber(pdfFileId);
 
 	const queryOptions = useMemo(

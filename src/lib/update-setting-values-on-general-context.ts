@@ -59,7 +59,5 @@ export function updateSettingValuesOnGeneralContext(
 	settings.user_settings.forEach(setGeneralSetting);
 	settings.project_settings?.forEach(setGeneralSetting);
 
-	console.log({ settingsForGeneralContext });
-
 	generalCtx.setState(settingsForGeneralContext);
 }

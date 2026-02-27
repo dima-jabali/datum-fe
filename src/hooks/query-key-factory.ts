@@ -91,6 +91,10 @@ export const queryKeyFactory = createQueryKeyStore({
 			queryKey: [organizationId, notebookId],
 		}),
 
+		"url-preview": (url: string) => ({
+			queryKey: [url],
+		}),
+
 		"pdf-file-by-id": (pdfFileId: FileId | PdfId | undefined) => ({
 			queryFn: () => api.get["pdf-file-by-id"](pdfFileId),
 			queryKey: [pdfFileId],

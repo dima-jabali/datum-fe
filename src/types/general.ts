@@ -12,4 +12,5 @@ export type UUID = Tagged<string, "UUID">;
 
 export type Nullable<T> = { [P in keyof T]: T[P] | null };
 
+export type Base64Image = `data:image/${string};base64,${string}`;
 export type Base64File = `data:${string};base64,${string}`;

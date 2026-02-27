@@ -14,6 +14,7 @@ export function Message({ msg }: { msg: BotConversationMessage }) {
 		case BotConversationMessageType.User_Message:
 			return <UserMessage msg={msg} key={msg.uuid} />;
 
+		case BotConversationMessageType.Notebook_Block_User_Image_Message:
 		case BotConversationMessageType.Notebook_Block_Message:
 			return <NotebookBlockMessage msg={msg} key={msg.uuid} />;
 

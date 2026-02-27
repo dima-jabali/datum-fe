@@ -11,7 +11,7 @@ import type { GeneralFileType } from "#/types/file";
 import {
 	LocalMimeType,
 	matchGeneralFileTypeToMimeType,
-	useFetchFileById,
+	useGetFileById,
 } from "#/hooks/get/use-get-file-by-id";
 import { useWithOrganizationId } from "#/contexts/general/ctx";
 
@@ -39,7 +39,7 @@ export const DownloadAndShowFilePreview = memo(
 		const mimeType = matchGeneralFileTypeToMimeType(fileType);
 
 		const organizationId = useWithOrganizationId();
-		const blobQuery = useFetchFileById({
+		const blobQuery = useGetFileById({
 			fileType: mimeType,
 			organizationId,
 			fileStringId,

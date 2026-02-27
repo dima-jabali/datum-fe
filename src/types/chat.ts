@@ -1,6 +1,5 @@
 import type { Tagged } from "type-fest";
 
-import type { SourceID } from "#/contexts/source-citation/context";
 import type { DatabaseConnectionType } from "#/types/databases";
 import type { GeneralFileType } from "#/types/file";
 import type {
@@ -15,6 +14,8 @@ import type {
 	PdfId,
 } from "#/types/notebook";
 import type { User } from "#/types/user";
+
+export type SourceID = Tagged<string, "SourceID">;
 
 export enum BotConversationMessageSenderType {
 	User = "USER",

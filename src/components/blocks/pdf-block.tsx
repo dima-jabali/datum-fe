@@ -19,7 +19,7 @@ import {
 	useIsUploadingPdfToNotebookBlock,
 	useUploadPdfToNotebookBlock,
 } from "#/hooks/mutation/use-upload-pdf-to-notebook-block";
-import { useFetchPdfFileById } from "#/hooks/get/use-get-pdf-file-by-id";
+import { useGetPdfFileById } from "#/hooks/get/use-get-pdf-file-by-id";
 import { NativePdfViewer } from "#/components/native-pdf-viewer";
 
 type Props = {
@@ -41,7 +41,7 @@ function PdfBlockWithContexts({ pdfBlock }: Props) {
 	const pdfMetadata = pdfBlock.custom_block_info?.pdf;
 	const blockUuid = pdfBlock.uuid;
 
-	const pdfFileQuery = useFetchPdfFileById(
+	const pdfFileQuery = useGetPdfFileById(
 		isValidNumber(pdfMetadata?.id),
 		pdfMetadata?.id,
 	);

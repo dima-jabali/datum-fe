@@ -12,11 +12,13 @@ import {
 	GET_AWS_BASE64_FILE_ACTION,
 	GET_AWS_FILE_AS_STRING_BINARY_ACTION,
 	GET_PRESIGNED_URL,
+	GET_WEBSITE_PREVIEW_DATA,
 	isDev,
 	UPLOAD_FILE_STRING_TO_AWS_ACTION,
 	UPLOAD_FILE_TO_AWS,
 } from "#/lib/utils";
 import type { AwsBucket, AwsKey, Base64File } from "#/types/general";
+import { getLinkPreviewAction } from "#/server-to-server-requests/get-link-preview";
 
 export async function action({ request }: Route.ActionArgs) {
 	const formData = await request.formData();
@@ -36,6 +38,14 @@ export async function action({ request }: Route.ActionArgs) {
 
 	try {
 		switch (formId || formIdFromUrl) {
+			case GET_WEBSITE_PREVIEW_DATA: {
+				const url = formData.get("url") as string;
+
+				invariant(url, "Missing url");
+
+				return await getLinkPreviewAction(url);
+			}
+
 			case GET_AWS_FILE_AS_STRING_BINARY_ACTION: {
 				const fileMimeType = formData.get("fileMimeType") as string;
 

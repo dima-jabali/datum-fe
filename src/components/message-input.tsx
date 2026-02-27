@@ -31,6 +31,7 @@ import { useIsStreaming } from "#/hooks/get/use-get-bot-conversation";
 import {
 	MessageType,
 	useAddBotConversationMessage,
+	type Message,
 } from "#/hooks/mutation/use-add-bot-conversation-message";
 import { useIsCreatingNotebook } from "#/hooks/mutation/use-is-creating-notebook";
 import { useSendChatFiles } from "#/hooks/mutation/use-send-chat-files";
@@ -39,6 +40,7 @@ import { matchIcon } from "#/icons/match-icon";
 import {
 	createBotConversationMessageUuid,
 	createRequestId,
+	fileToBase64,
 	OPTIMISTIC_NEW_NOTEBOOK_ID,
 } from "#/lib/utils";
 import type { BotConversationId, ChatTools } from "#/types/notebook";
@@ -47,9 +49,11 @@ import {
 	type WebSocketStopGenerationPayload,
 } from "#/types/websocket";
 import { LOADER } from "#/components/loader";
+import type { Base64Image } from "#/types/general";
+import { getErrorMessage } from "react-error-boundary";
 
 export function MessageInput() {
-	const [files, setFiles] = useState<File[]>([]);
+	const [isSending, setIsSending] = useState(false);
 
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
@@ -64,9 +68,7 @@ export function MessageInput() {
 	const sendChatFiles = useSendChatFiles();
 	const toolsToUse = useUserChatTools();
 	const isStreaming = useIsStreaming();
-
-	const isSendingMsg =
-		addBotConversationMessage.isPending || sendChatFiles.isPending;
+	const files = generalCtx.use.files();
 
 	const isDefaultToolsSelected =
 		currentOrganization.default_chat_tools && toolsToUse
@@ -86,13 +88,15 @@ export function MessageInput() {
 				}
 			}
 
-			setFiles((prev) => uniqBy([...prev, ...files], (file) => file.name));
+			generalCtx.setState((prev) => ({
+				files: uniqBy([...prev.files, ...files], (file) => file.name),
+			}));
 		}
 	}
 
 	function removeAllFiles() {
-		setFiles((prev) => {
-			for (const file of prev) {
+		generalCtx.setState((prev) => {
+			for (const file of prev.files) {
 				const previewUrl = Reflect.get(file, "previewUrl");
 
 				if (previewUrl) {
@@ -100,7 +104,7 @@ export function MessageInput() {
 				}
 			}
 
-			return [];
+			return { files: [] };
 		});
 
 		if (fileInputRef.current) {
@@ -138,12 +142,10 @@ export function MessageInput() {
 	}
 
 	function removeFile(file: File) {
-		setFiles((prev) => {
-			const next: typeof prev = [];
+		generalCtx.setState((prev) => {
+			const next: typeof prev.files = [];
 
-			prev.filter((f) => f !== file);
-
-			for (const f of prev) {
+			for (const f of prev.files) {
 				if (f !== file) {
 					next.push(f);
 				} else {
@@ -155,12 +157,12 @@ export function MessageInput() {
 				}
 			}
 
-			return next;
+			return { files: next };
 		});
 	}
 
 	async function handleSendMsg() {
-		if (isSendingMsg) {
+		if (isSending) {
 			console.log("Already sending a message");
 
 			return;
@@ -203,43 +205,80 @@ export function MessageInput() {
 			return;
 		}
 
-		if (files.length > 0) {
-			console.log("Sending files...");
-
-			await sendChatFiles.mutateAsync({ files });
+		const imageFiles = [];
+		const otherFiles = [];
+		for (const file of files) {
+			if (file.type.startsWith("image/")) {
+				imageFiles.push(file);
+			} else {
+				otherFiles.push(file);
+			}
 		}
 
-		if (message) {
-			console.log("Sending text msg...");
+		try {
+			setIsSending(true);
 
-			let tools_to_use: typeof toolsToUse = undefined;
+			if (otherFiles.length > 0) {
+				console.log("Sending files...");
 
-			if (toolSelectionType === ToolSelectionType.SINGLE_SELECT) {
-				if (toolsToUse?.[0]) {
-					tools_to_use = [toolsToUse[0]];
-				}
-			} else if (toolSelectionType === ToolSelectionType.MULTI_SELECT) {
-				tools_to_use = toolsToUse;
+				await sendChatFiles.mutateAsync({ files: otherFiles });
 			}
 
-			addBotConversationMessage.mutate({
-				uuid: createBotConversationMessageUuid(),
-				botConversationId,
-				tools_to_use,
-				messages: [
-					{
+			if (message || imageFiles.length > 0) {
+				console.log("Sending text/img msg...");
+
+				let tools_to_use: typeof toolsToUse = undefined;
+
+				if (toolSelectionType === ToolSelectionType.SINGLE_SELECT) {
+					if (toolsToUse?.[0]) {
+						tools_to_use = [toolsToUse[0]];
+					}
+				} else if (toolSelectionType === ToolSelectionType.MULTI_SELECT) {
+					tools_to_use = toolsToUse;
+				}
+
+				const messages: Array<Message> = [];
+
+				if (message) {
+					messages.push({
 						uuid: createBotConversationMessageUuid(),
 						type: MessageType.Text,
 						text: message,
-					},
-				],
-			});
-		}
+					});
+				}
 
-		// Clear all:
-		textarea.value = "";
-		scrollToBottom();
-		removeAllFiles();
+				for (const img of imageFiles) {
+					const base64 = (await fileToBase64(img)) as Base64Image;
+
+					messages.push({
+						uuid: createBotConversationMessageUuid(),
+						type: MessageType.Image,
+						image: base64,
+					});
+				}
+
+				addBotConversationMessage.mutate({
+					uuid: createBotConversationMessageUuid(),
+					botConversationId,
+					tools_to_use,
+					messages,
+				});
+			}
+
+			// Clear all:
+			generalCtx.setState({messageInputText: ""});
+			textarea.value = "";
+			scrollToBottom();
+			removeAllFiles();
+		} catch (error) {
+			console.error("Error sending message:", error);
+
+			toast.error("Error sending message", {
+				description: getErrorMessage(error),
+			});
+		} finally {
+			setIsSending(false);
+		}
 	}
 
 	function handleClickOnTool(tool: ChatTools) {
@@ -297,6 +336,10 @@ export function MessageInput() {
 		if (!e.metaKey && e.key === "Enter") {
 			handleSendMsg();
 		}
+	}
+
+	function handleTextareaChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+		generalCtx.setState({ messageInputText: e.target.value });
 	}
 
 	return (
@@ -366,8 +409,16 @@ export function MessageInput() {
 				<textarea
 					className="field-sizing-content simple-scrollbar resize-none min-h-[2lh] max-h-[50dvh] w-full focus-visible:outline-none p-3"
 					onKeyDown={handleOnKeyDownOnTextarea}
+					onChange={handleTextareaChange}
 					maxLength={50_000}
-					ref={textareaRef}
+					autoFocus
+					ref={(ref) => {
+						if (ref) {
+							ref.value = generalCtx.getState().messageInputText;
+						}
+
+						textareaRef.current = ref;
+					}}
 				/>
 
 				<div className="flex items-center justify-between flex-none">
@@ -384,7 +435,7 @@ export function MessageInput() {
 							<NativePopover>
 								<NativePopoverTrigger
 									className="flex items-center justify-center h-10 min-w-10 button-hover gap-2 p-2 text-sm rounded-lg border-none shadow-none max-w-full disabled:pointer-events-none"
-									disabled={isStreaming || isSendingMsg}
+									disabled={isStreaming || isSending}
 									title="Mode"
 								>
 									{toolSelectionType === ToolSelectionType.MULTI_SELECT &&
@@ -472,14 +523,14 @@ export function MessageInput() {
 						title={isStreaming ? "Stop" : "Send"}
 						type="button"
 						onClick={
-							isSendingMsg
+							isSending
 								? undefined
 								: isStreaming
 									? handleStopStreaming
 									: handleSendMsg
 						}
 					>
-						{isSendingMsg ? (
+						{isSending ? (
 							LOADER
 						) : isStreaming ? (
 							<StopCircle className="size-5 stroke-1" />

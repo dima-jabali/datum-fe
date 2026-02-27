@@ -50,7 +50,7 @@ export async function queryFnToFetchFileById({
 			});
 		}
 
-		async function tryAws(aws_bucket: string, aws_key: string) {
+		async function tryAws(aws_bucket: AwsBucket, aws_key: AwsKey) {
 			const formData = new FormData();
 			formData.set("formId", GET_AWS_FILE_AS_STRING_BINARY_ACTION);
 			formData.set("fileMimeType", fileType);
@@ -164,7 +164,7 @@ export async function queryFnToFetchFileById({
 	}
 }
 
-export function useFetchFileById(
+export function useGetFileById(
 	props: Omit<FetchFileByIdProps, "submitActionPromise">,
 ) {
 	return useQuery({

@@ -115,6 +115,7 @@ html {
 	--color-button-active: var(--button-active);
 	--color-button-hover: var(--button-hover);
 	--color-border-smooth: var(--border-smooth);
+	/* --color-alt-row: var(--alt-row); */
 }
 
 :root {
@@ -161,7 +162,8 @@ html {
 	--link-visited: hsl(268.12deg 100% 32.39%);
 	--button-active: rgb(0 0 0 / 20%);
 	--button-hover: rgb(0 0 0 / 10%);
-	--border-smooth: rgb(0 0 0 / 30%);
+	--border-smooth: rgb(167, 167, 167);
+	--alt-row: oklch(87.302% 0.0001 271.152 / 0.294);
 }
 
 @layer base {

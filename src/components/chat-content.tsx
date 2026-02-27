@@ -1,17 +1,17 @@
+import { AutoScrollIfOnBottom } from "#/components/auto-scroll-if-on-bottom";
+import { DefaultSuspenseAndErrorBoundary } from "#/components/default-suspense-and-error-boundary";
+import { EmptyChat } from "#/components/empty-chat";
+import { Message } from "#/components/message";
+import { MessageInput } from "#/components/message-input";
+import { PlanMessage } from "#/components/plan-message/plan-message";
+import { ScrollToBottomButton } from "#/components/scroll-to-bottom-button";
+import { WithChatData } from "#/components/with-chat-data";
 import { generalCtx } from "#/contexts/general/ctx";
 import {
 	useGetBotConversationMessageListPage,
 	useHasAnyMessage,
 } from "#/hooks/get/use-get-bot-conversation-message-list-page";
-import { AutoScrollIfOnBottom } from "#/components/auto-scroll-if-on-bottom";
-import { DefaultSuspenseAndErrorBoundary } from "#/components/default-suspense-and-error-boundary";
-import { Message } from "#/components/message";
-import { EmptyChat } from "#/components/empty-chat";
-import { MessageInput } from "#/components/message-input";
-import { ScrollToBottomButton } from "#/components/scroll-to-bottom-button";
-import { WithChatData } from "#/components/with-chat-data";
-import { PlanMessage } from "#/components/plan-message/plan-message";
-import { SourceCitationContextProvider } from "#/contexts/source-citation/provider";
+import { SetNormalizedSourcesOnGeneralCtx } from "#/lib/sources-for-user/set-normalized-sources-on-general-ctx";
 
 export function ChatContent() {
 	return (
@@ -19,11 +19,11 @@ export function ChatContent() {
 			failedText="Error on chat content!"
 			fallbackFor="chat-content"
 		>
-			<SourceCitationContextProvider>
-				<WithChatData>
-					<Chat />
-				</WithChatData>
-			</SourceCitationContextProvider>
+			<WithChatData>
+				<SetNormalizedSourcesOnGeneralCtx />
+
+				<Chat />
+			</WithChatData>
 		</DefaultSuspenseAndErrorBoundary>
 	);
 }

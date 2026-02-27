@@ -42,7 +42,7 @@ export const CodeBlock = memo(function CodeBlock({
 				</div>
 			</header>
 
-			<div className="font-mono *:!my-0 *:!p-2 text-sm">
+			<div className="font-mono *:!my-0 *:!p-2 text-sm *:min-h-[4lh]">
 				{isLoading ? (
 					<pre>
 						<code>{text}</code>

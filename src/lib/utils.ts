@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-import type { ISODateString, UUID } from "#/types/general";
+import type { Base64File, ISODateString, UUID } from "#/types/general";
 import type {
 	NotebookBlockUuid,
 	NotebookId,
@@ -11,6 +11,29 @@ import type { BotConversationMessageUuid } from "#/types/chat";
 import type { RequestId } from "#/types/websocket";
 
 export const OPTIMISTIC_NEW_NOTEBOOK_ID = Number.EPSILON as NotebookId;
+
+export function functionThatReturnsNull() {
+	return null;
+}
+
+export function fileToBase64(file: File) {
+	return new Promise<Base64File>((resolve, reject) => {
+		const reader = new FileReader();
+
+		// Start reading the file as a Data URL
+		reader.readAsDataURL(file);
+
+		// Success handler
+		reader.onload = () => {
+			resolve(reader.result as Base64File);
+		};
+
+		// Error handler
+		reader.onerror = (error) => {
+			reject(error);
+		};
+	});
+}
 
 /** Make sure this corresponds to the media query in `global-styles.css`!! */
 export function isMobile() {
@@ -241,6 +264,7 @@ export const GET_AWS_FILE_AS_STRING_BINARY_ACTION =
 export const UPLOAD_FILE_STRING_TO_AWS_ACTION =
 	"UPLOAD_FILE_STRING_TO_AWS_ACTION";
 export const GET_AWS_BASE64_FILE_ACTION = "GET_AWS_BASE64_FILE_ACTION";
+export const GET_WEBSITE_PREVIEW_DATA = "GET_WEBSITE_PREVIEW_DATA";
 export const DELETE_AWS_FILE_ACTION = "DELETE_AWS_FILE_ACTION";
 export const UPLOAD_FILE_TO_AWS = "UPLOAD_FILE_TO_AWS";
 export const GET_PRESIGNED_URL = "GET_PRESIGNED_URL";

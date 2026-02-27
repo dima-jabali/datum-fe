@@ -94,8 +94,12 @@ export function useSendChatFiles() {
 					const blockBelow = blocks[blockIndex + 1];
 
 					const baseBlock: BlockBase = {
+						label: isImageBlock
+							? BlockLabel.IMAGE
+							: isCSVBlock
+								? BlockLabel.CSV
+								: BlockLabel.PDF,
 						write_variables: [{ name: getRandomSnakeCaseName() }],
-						label: isCSVBlock ? BlockLabel.CSV : BlockLabel.PDF,
 						// @ts-expect-error => this is just so it is accessible later in this code:
 						block_below_uuid: blockBelow?.uuid ?? null,
 						block_above_uuid: blockAbove?.uuid ?? null,

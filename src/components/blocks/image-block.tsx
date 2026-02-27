@@ -41,7 +41,7 @@ export const ImageBlock = memo(function ImageBlock({
 					/>
 				) : (
 					<DownloadAndShowFilePreview
-						className="block w-full max-w-full cursor-pointer object-cover rounded-md"
+						className="block w-full max-w-full object-cover rounded-md"
 						fileType={GeneralFileType.IMAGE}
 						aws_bucket={awsBucket}
 						aws_key={awsKey}

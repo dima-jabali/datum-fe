@@ -55,7 +55,7 @@ export function TanStackTable({
 
 									return (
 										<th
-											className="data-[is-resizing=true]:pointer-events-none text-primary relative"
+											className="data-[is-resizing=true]:pointer-events-none text-primary relative border border-t-0 first:border-l-0 last:border-r-0 border-border-smooth"
 											style={{ width: `${header.getSize()}px` }}
 											data-is-resizing={isResizing}
 											colSpan={header.colSpan}
@@ -127,11 +127,11 @@ export function TanStackTable({
 
 									return (
 										<td
+											className="data-[is-index-column=true]:text-center px-2 border-x border-border-smooth first:border-l-0 last:border-r-0"
 											data-is-index-column={
 												cell.column.columnDef.id === DATA_ID_KEY
 											}
 											title={`${hasNestedData ? "Json Viewer" : renderValue}`}
-											className="data-[is-index-column=true]:text-center px-2"
 											style={{ width: `${cell.column.getSize()}px` }}
 											key={cell.id}
 										>

@@ -15,6 +15,8 @@ import type {
 import type { OrganizationId } from "#/types/organization";
 import type { UserId } from "#/types/user";
 import { useWithCurrentOrg } from "#/hooks/use-current-organization";
+import type { SourceID } from "#/types/chat";
+import type { SourceMainValuesContainer } from "#/lib/sources-for-user/source-main-values-container";
 
 export enum ToolSelectionType {
 	SINGLE_SELECT = "SINGLE_SELECT",
@@ -31,13 +33,16 @@ export type GeneralCtxData = {
 	toolSelectionType: ToolSelectionType;
 
 	chatListRef: HTMLOListElement | null;
+	messageInputText: string;
 	isSidebarOpen: boolean;
+	files: Array<File>;
 
 	windowResizerObserver: ResizeObserver;
 	windowHeight: number;
 	windowWidth: number;
 	isMobile: boolean;
 
+	sourcesMainValues: Map<SourceID, SourceMainValuesContainer<any, any>>;
 	chatBotAgentName: string;
 };
 
@@ -54,7 +59,9 @@ const generalCtxStoreBase = create(
 				userChatTools: {},
 
 				isSidebarOpen: false,
+				messageInputText: "",
 				chatListRef: null,
+				files: [],
 
 				windowResizerObserver: (() => {
 					if (!globalThis.window) {
@@ -84,6 +91,7 @@ const generalCtxStoreBase = create(
 				windowHeight: 0,
 				windowWidth: 0,
 
+				sourcesMainValues: new Map(),
 				chatBotAgentName: "AI",
 			};
 		}),
@@ -91,6 +99,7 @@ const generalCtxStoreBase = create(
 			partialize(state) {
 				return {
 					botConversationId: state.botConversationId,
+					messageInputText: state.messageInputText,
 					organizationId: state.organizationId,
 					notebookId: state.notebookId,
 				};
